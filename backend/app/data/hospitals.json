@@ -1,0 +1,46 @@
+[
+  {
+    "id": "hosp_mercy_general",
+    "name": "Mercy General Hospital",
+    "trauma_level": 1,
+    "total_beds": 450,
+    "available_er_beds": 3,
+    "latitude": 37.7801,
+    "longitude": -122.4101,
+    "specialties": ["Neurological", "Cardiac", "Severe Shock"],
+    "contact_phone": "+1-555-0101"
+  },
+  {
+    "id": "hosp_city_memorial",
+    "name": "City Memorial Hospital",
+    "trauma_level": 2,
+    "total_beds": 350,
+    "available_er_beds": 11,
+    "latitude": 37.7651,
+    "longitude": -122.4301,
+    "specialties": ["Orthopedic", "General Trauma"],
+    "contact_phone": "+1-555-0102"
+  },
+  {
+    "id": "hosp_valley_community",
+    "name": "Valley Community Clinic",
+    "trauma_level": 3,
+    "total_beds": 120,
+    "available_er_beds": 8,
+    "latitude": 37.7501,
+    "longitude": -122.4001,
+    "specialties": ["Minor Fractures", "Basic Stabilization"],
+    "contact_phone": "+1-555-0103"
+  },
+  {
+    "id": "hosp_metro_trauma",
+    "name": "Metro Trauma Center",
+    "trauma_level": 1,
+    "total_beds": 500,
+    "available_er_beds": 0,
+    "latitude": 37.7901,
+    "longitude": -122.4201,
+    "specialties": ["Burn Care", "Pediatric Trauma", "Amputation"],
+    "contact_phone": "+1-555-0104"
+  }
+]

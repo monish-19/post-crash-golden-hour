@@ -1,0 +1,28 @@
+{
+  "status": "PASSED",
+  "critical_case_dispatch": {
+    "hospital_name": "Mercy General Hospital",
+    "trauma_level": 1,
+    "contact_phone": "+1-555-0101",
+    "distance_km": 1.001,
+    "paramedic_eta_minutes": 1.5,
+    "dispatch_score": 93.1,
+    "specialties": [
+      "Neurological",
+      "Cardiac",
+      "Severe Shock"
+    ]
+  },
+  "minor_case_dispatch": {
+    "hospital_name": "City Memorial Hospital",
+    "trauma_level": 2,
+    "contact_phone": "+1-555-0102",
+    "distance_km": 1.439,
+    "paramedic_eta_minutes": 2.11,
+    "dispatch_score": 96.84,
+    "specialties": [
+      "Orthopedic",
+      "General Trauma"
+    ]
+  }
+}

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bystander WebAR Life-Support Guidance - Post-Crash Golden Hour</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- A-Frame CDN -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff3b30;
+            --primary-glow: rgba(255, 59, 48, 0.4);
+            --emerald: #34c759;
+            --emerald-glow: rgba(52, 199, 89, 0.4);
+            --dark: #0a0a0c;
+            --glass: rgba(18, 18, 24, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--dark);
+            color: #ffffff;
+        }
+
+        /* 3D AR Layer Container */
+        #ar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Mock Camera Simulation Background */
+        .simulation-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Glassmorphic UI Dashboard overlays */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* Header Card */
+        header {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            padding: 16px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .badge {
+            background: var(--primary);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: pulse-border 1.2s infinite alternate;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .logo-text span {
+            color: var(--primary);
+        }
+
+        /* CPR Pulse Alert Indicator */
+        .cpr-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+            max-width: 420px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .metronome-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .pulse-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-weight: bold;
+            font-size: 1.4rem;
+            box-shadow: 0 0 0 0 var(--primary-glow);
+            transition: all 0.1s ease;
+        }
+
+        .pulse-active {
+            animation: pulse-ring 0.6s infinite ease-in-out;
+        }
+
+        .cpr-headline {
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-align: center;
+            color: #fff;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .cpr-headline span {
+            color: var(--primary);
+            animation: blink 0.6s infinite steps(2, start);
+        }
+
+        .instructions-list {
+            list-style: none;
+            margin-top: 12px;
+        }
+
+        .instructions-list li {
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            line-height: 1.4;
+            color: #d1d1d6;
+        }
+
+        .instructions-list li::before {
+            content: "✦";
+            color: var(--primary);
+            margin-right: 10px;
+            font-size: 1rem;
+        }
+
+        /* Controls Block */
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .btn-secondary:active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Metronome audio indicator */
+        .audio-status {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #8e8e93;
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+
+        /* Animations */
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 var(--primary-glow);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 16px rgba(255, 59, 48, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+            }
+        }
+
+        @keyframes pulse-border {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
+            }
+            100% {
+                box-shadow: 0 0 0 8px rgba(255, 59, 48, 0);
+            }
+        }
+
+        @keyframes blink {
+            to {
+                visibility: hidden;
+            }
+        }
+    </style>
+</head>
+<body class="simulation-bg">
+
+    <!-- 3D AR Layer using A-Frame -->
+    <div id="ar-container">
+        <a-scene embedded vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;">
+            
+            <!-- Standard camera view -->
+            <a-entity camera position="0 1.6 0"></a-entity>
+
+            <!-- Pulsing Chest Compression Arrow Graphic -->
+            <!-- Placed in front of camera (0 1.2 -2.5) -->
+            <a-entity id="cpr-arrow-group" position="0 1.0 -2.2" rotation="30 0 0">
+                <!-- 3D Guide Ring -->
+                <a-ring color="#ff3b30" radius-inner="0.22" radius-outer="0.25" rotation="90 0 0" opacity="0.8"></a-ring>
+                
+                <!-- Pulsing Cylinder Pointer Arrow -->
+                <a-cylinder id="cpr-pointer" color="#ff3b30" height="0.3" radius="0.06" position="0 0.25 0" opacity="0.95">
+                </a-cylinder>
+                
+                <!-- Pulsing Vector Tip (Cone) -->
+                <a-cone id="cpr-tip" color="#ff3b30" height="0.18" radius-bottom="0.12" position="0 0.05 0" opacity="0.95">
+                </a-cone>
+
+                <!-- Anchor Sphere -->
+                <a-sphere color="#ffffff" radius="0.04" position="0 0 0" opacity="0.8"></a-sphere>
+            </a-entity>
+
+            <!-- Lighting -->
+            <a-entity light="type: ambient; color: #ffffff; intensity: 0.8;"></a-entity>
+            <a-entity light="type: directional; color: #ffffff; intensity: 0.6;" position="-1 2 1"></a-entity>
+        </a-scene>
+    </div>
+
+    <!-- 2D Overlay UI Layer -->
+    <div class="ui-layer">
+        
+        <!-- Header Panel -->
+        <header class="interactive">
+            <div class="logo-text">Post-Crash <span>AR Guide</span></div>
+            <div class="badge">CPR Active</div>
+        </header>
+
+        <!-- Bottom Guidance Panel -->
+        <section class="cpr-card interactive">
+            <div class="metronome-visual">
+                <!-- Glowing Pulsing Metronome Circle -->
+                <div id="pulse-circle" class="pulse-circle pulse-active">100</div>
+                <div class="audio-status" id="bpm-indicator">BPM METRONOME ACTIVE</div>
+            </div>
+
+            <h2 class="cpr-headline" id="cpr-instruction">COMPRESS <span>NOW</span></h2>
+            
+            <ul class="instructions-list">
+                <li>Align the 3D glowing red vector arrow directly over the victim's center chest.</li>
+                <li>Press down hard and fast, matching the pulsing pace of the red arrow.</li>
+                <li>Ensure depth of <strong>5 to 6 cm</strong> (2 inches) per compression.</li>
+                <li>Allow full chest recoil between compressions. Do not lean.</li>
+            </ul>
+
+            <div class="controls-row">
+                <button class="btn-primary" id="toggle-audio">Mute Audio</button>
+                <button class="btn-secondary" id="toggle-bg">Camera View</button>
+            </div>
+            <div class="audio-status" id="audio-feedback">AUDIO PACER ENABLED (100 BPM)</div>
+        </section>
+    </div>
+
+    <!-- Asynchronous Animation and Sound Script -->
+    <script>
+        // Setup metronome beat rate: 100 BPM = 600ms per beat
+        const BEAT_INTERVAL = 600; 
+        
+        const pulseCircle = document.getElementById('pulse-circle');
+        const cprInstruction = document.getElementById('cpr-instruction');
+        const toggleAudioBtn = document.getElementById('toggle-audio');
+        const toggleBgBtn = document.getElementById('toggle-bg');
+        
+        let audioEnabled = true;
+        let metronomeTimer = null;
+        let clickOscillator = null;
+        
+        // Initialize Web Audio Context dynamically on first user interaction
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Metronome Sound Generator
+        function playBeatTone() {
+            if (!audioEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            // Generate high-pitch synth click
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch click A5
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1); // Decay over 100ms
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.12);
+        }
+
+        // Pulse Metronome loop at 100 BPM
+        let pulseState = false;
+        function runMetronome() {
+            // Play Audio Beep
+            playBeatTone();
+
+            // Toggle Visual States
+            pulseState = !pulseState;
+            
+            // Pulse standard A-Frame 3D models using scale animation
+            const arArrow = document.getElementById('cpr-arrow-group');
+            if (arArrow) {
+                // Scale arrow downwards on impact pulse
+                if (pulseState) {
+                    arArrow.setAttribute('scale', '1.0 0.7 1.0');
+                    cprInstruction.innerHTML = "COMPRESS <span>NOW</span>";
+                    pulseCircle.style.transform = "scale(1.15)";
+                    pulseCircle.style.background = "#ff3b30";
+                } else {
+                    arArrow.setAttribute('scale', '1.0 1.1 1.0');
+                    cprInstruction.innerHTML = "RELEASE <span>UP</span>";
+                    pulseCircle.style.transform = "scale(0.95)";
+                    pulseCircle.style.background = "#34c759";
+                }
+            }
+        }
+
+        // Start metronome
+        metronomeTimer = setInterval(runMetronome, BEAT_INTERVAL);
+
+        // Control handlers
+        toggleAudioBtn.addEventListener('click', () => {
+            initAudio();
+            audioEnabled = !audioEnabled;
+            if (audioEnabled) {
+                toggleAudioBtn.innerHTML = "Mute Audio";
+                document.getElementById('audio-feedback').innerHTML = "AUDIO PACER ENABLED (100 BPM)";
+            } else {
+                toggleAudioBtn.innerHTML = "Unmute Audio";
+                document.getElementById('audio-feedback').innerHTML = "AUDIO PACER MUTED";
+            }
+        });
+
+        // Toggle Mock Camera Simulation Background vs transparent AR scene
+        let simulationMode = true;
+        toggleBgBtn.addEventListener('click', () => {
+            simulationMode = !simulationMode;
+            if (simulationMode) {
+                document.body.classList.add('simulation-bg');
+                toggleBgBtn.innerHTML = "Camera View";
+            } else {
+                document.body.classList.remove('simulation-bg');
+                toggleBgBtn.innerHTML = "Simulate Cabin";
+            }
+        });
+
+        // Unlock audio context on touch/click
+        document.body.addEventListener('click', () => {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>

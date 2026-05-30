@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trauma Bay Command Dashboard - Post-Crash Golden Hour</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #ff3b30;
+            --primary-glow: rgba(255, 59, 48, 0.4);
+            --emerald: #34c759;
+            --emerald-glow: rgba(52, 199, 89, 0.3);
+            --cyan: #007aff;
+            --cyan-glow: rgba(0, 122, 255, 0.3);
+            --warning: #ff9500;
+            --warning-glow: rgba(255, 149, 0, 0.3);
+            --dark: #09090b;
+            --card-bg: rgba(18, 18, 24, 0.85);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--dark);
+            color: #f4f4f5;
+            height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Grid */
+        header {
+            background: rgba(18, 18, 24, 0.95);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-pulse {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--emerald);
+            box-shadow: 0 0 12px var(--emerald);
+            animation: pulse-green 1.5s infinite;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .logo-text span {
+            color: var(--primary);
+        }
+
+        .ws-status-badge {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid var(--emerald);
+            color: var(--emerald);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .ws-disconnected {
+            background: rgba(255, 59, 48, 0.1) !important;
+            border-color: var(--primary) !important;
+            color: var(--primary) !important;
+        }
+
+        /* Layout Grid */
+        main {
+            flex: 1;
+            padding: 24px 32px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Banner Alarm States */
+        #alert-banner {
+            grid-column: 1 / -1;
+            background: rgba(255, 59, 48, 0.1);
+            border: 2px solid var(--primary);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 0 24px var(--primary-glow);
+            animation: flash-red 2s infinite alternate;
+            display: none; /* hidden by default */
+        }
+
+        .alarm-text h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .alarm-text p {
+            color: #ff8b85;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        /* Standby Grid Screen */
+        #standby-screen {
+            grid-column: 1 / -1;
+            border: 1px dashed var(--border);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 40px;
+            background: rgba(18, 18, 24, 0.4);
+            text-align: center;
+        }
+
+        .radar-sweep {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 2px solid rgba(52, 199, 89, 0.2);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .radar-sweep::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--emerald);
+            opacity: 0;
+            animation: radar-ping 2.5s infinite linear;
+        }
+
+        .standby-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .standby-sub {
+            color: #71717a;
+            font-size: 0.95rem;
+            max-width: 500px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        /* Dynamic Ingestion triggers buttons */
+        .demo-trigger-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 16px;
+            text-align: left;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .demo-trigger-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .trigger-btn-grid {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-red {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        .btn-red:hover {
+            opacity: 0.9;
+        }
+
+        .btn-yellow {
+            background: var(--warning);
+            color: #fff;
+            box-shadow: 0 4px 14px var(--warning-glow);
+        }
+
+        .btn-yellow:hover {
+            opacity: 0.9;
+        }
+
+        /* Grid Data Columns (Visible only when crash active) */
+        .data-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            display: none; /* hidden on standby */
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #a1a1aa;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title span {
+            color: var(--cyan);
+        }
+
+        /* Metrics Display Grid */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .metric-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 8px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .value-red { color: var(--primary); }
+        .value-yellow { color: var(--warning); }
+        .value-green { color: var(--emerald); }
+        .value-cyan { color: var(--cyan); }
+
+        /* Biological Progress Bars */
+        .bio-bar-group {
+            margin-bottom: 16px;
+        }
+
+        .bio-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #a1a1aa;
+            margin-bottom: 8px;
+        }
+
+        .bio-bar-outer {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .bio-bar-inner {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease-in-out;
+        }
+
+        .bg-red { background: var(--primary); }
+        .bg-yellow { background: var(--warning); }
+        .bg-green { background: var(--emerald); }
+
+        /* Preemption signals checklist */
+        .checkpoint-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkpoint-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .checkpoint-info h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .checkpoint-info p {
+            font-size: 0.75rem;
+            color: #71717a;
+            margin-top: 4px;
+        }
+
+        .preempt-badge {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid var(--emerald);
+            color: var(--emerald);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            animation: blink 0.8s infinite steps(2, start);
+        }
+
+        /* Animations */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(52, 199, 89, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+        }
+
+        @keyframes radar-ping {
+            0% { transform: scale(0.6); opacity: 0; }
+            50% { opacity: 0.6; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        @keyframes flash-red {
+            0% { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+            100% { border-color: #ff6b63; box-shadow: 0 0 30px rgba(255, 59, 48, 0.8); }
+        }
+
+        @keyframes blink { to { visibility: hidden; } }
+    </style>
+</head>
+<body>
+
+    <!-- Hospital Dashboard Header -->
+    <header>
+        <div class="header-title">
+            <div class="logo-pulse"></div>
+            <div class="logo-text">TRAUMA BAY <span>MONITOR</span></div>
+        </div>
+        <div id="ws-badge" class="ws-status-badge ws-disconnected">Offline / Reconnecting</div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+        <!-- Flashing Emergency Alarm Banner -->
+        <div id="alert-banner">
+            <div class="alarm-text">
+                <h2>🚨 Critical Trauma Inbound 🚨</h2>
+                <p id="alert-banner-sub">Patient crash coordinates locked. Emergency dispatch active.</p>
+            </div>
+            <div class="preempt-badge" style="border-color: var(--primary); color: var(--primary); font-size: 0.85rem; padding: 6px 14px;">LEVEL 1 PRIORITY</div>
+        </div>
+
+        <!-- Standby Grid Screen (Visible when no crash active) -->
+        <div id="standby-screen">
+            <div class="radar-sweep">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <h3 class="standby-title">Trauma Bay Monitoring Channel Active</h3>
+            <p class="standby-sub">Standing by for vehicle telematics IoT stream alerts. Connect your edge generator or click below to manually inject dynamic mock presentation profiles.</p>
+            
+            <!-- Dynamic Demo Ingestion triggers cards -->
+            <div class="demo-trigger-card">
+                <h3>⚡ Demo Interactive Presentation Mode</h3>
+                <p class="standby-sub" style="font-size: 0.8rem; margin-bottom: 16px;">These buttons instantly inject realistic crash profiles directly into the FastAPI backend endpoints via REST API calls, verifying the multi-criteria hospital selection and IoT corridors in real-time.</p>
+                <div class="trigger-btn-grid">
+                    <button class="btn-red" onclick="injectMockCrash('unconscious')">Inject Unconscious Crash</button>
+                    <button class="btn-yellow" onclick="injectMockCrash('intoxicated')">Inject Intoxicated Event</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEFT COLUMN: IoT Telemetry & Driver Biological Status -->
+        <div id="col-left" class="data-column">
+            
+            <!-- Structural Crash Telemetry Card -->
+            <div class="card">
+                <div class="card-title">IoT Crash Telemetry <span>Sensors</span></div>
+                <div class="metric-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">Isolated Impact G-Force</div>
+                        <div id="val-g-force" class="metric-value value-red">0.0 G</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Deceleration Delta</div>
+                        <div id="val-decel" class="metric-value value-red">0.0 km/h</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Impact Speed</div>
+                        <div id="val-speed" class="metric-value value-yellow">0.0 km/h</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Accident ID</div>
+                        <div id="val-accid" class="metric-value value-cyan" style="font-size: 0.95rem; line-height: 2.2;">N/A</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Driver Biological Status Card -->
+            <div class="card">
+                <div class="card-title">AI Driver Biological Triage <span>Real-time</span></div>
+                
+                <div class="bio-bar-group">
+                    <div class="bio-bar-label">
+                        <span>Eye Aspect Ratio (EAR) - Blinking</span>
+                        <span id="val-ear">0.00</span>
+                    </div>
+                    <div class="bio-bar-outer">
+                        <div id="bar-ear" class="bio-bar-inner bg-green" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bio-bar-group">
+                    <div class="bio-bar-label">
+                        <span>Mouth Aspect Ratio (MAR) - Muscle Slackness</span>
+                        <span id="val-mar">0.00</span>
+                    </div>
+                    <div class="bio-bar-outer">
+                        <div id="bar-mar" class="bio-bar-inner bg-green" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bio-bar-group">
+                    <div class="bio-bar-label">
+                        <span>Unresponsive Probability</span>
+                        <span id="val-unresp">0.0%</span>
+                    </div>
+                    <div class="bio-bar-outer">
+                        <div id="bar-unresp" class="bio-bar-inner bg-red" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="bio-bar-group">
+                    <div class="bio-bar-label">
+                        <span>Intoxication Index</span>
+                        <span id="val-intox">0.0%</span>
+                    </div>
+                    <div class="bio-bar-outer">
+                        <div id="bar-intox" class="bio-bar-inner bg-yellow" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Regional Dispatch & IoT Smart City Green Corridors -->
+        <div id="col-right" class="data-column">
+            
+            <!-- Regional Dispatch Allocation Card -->
+            <div class="card">
+                <div class="card-title">Trauma Center Dispatch <span>Allocated</span></div>
+                <div class="metric-grid" style="grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div class="metric-item" style="border-color: var(--cyan); background: rgba(0, 122, 255, 0.02);">
+                        <div class="metric-label">Target Regional Hospital</div>
+                        <div id="val-hospital" class="metric-value value-cyan" style="font-size: 1.4rem;">N/A</div>
+                    </div>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">Dynamic Paramedic ETA</div>
+                        <div id="val-eta" class="metric-value value-green">0.0 Mins</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Routing Priority Score</div>
+                        <div id="val-score" class="metric-value value-green">0.0 / 100</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IoT Smart City Green Corridor Card -->
+            <div class="card">
+                <div class="card-title">IoT Smart City Green Corridor <span>Checkpoints</span></div>
+                
+                <div class="checkpoint-list" id="val-corridor-list">
+                    <!-- Dynamic Checklist items injected -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Client WebSocket Ingestion and Simulation Script -->
+    <script>
+        let socket = null;
+        
+        // Dynamically resolve WebSocket address for localhost/remote parity
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host || '127.0.0.1:8000';
+        const wsUrl = `${protocol}//${host}/ws/trauma-bay`;
+
+        const badge = document.getElementById('ws-badge');
+        const standbyScreen = document.getElementById('standby-screen');
+        const alertBanner = document.getElementById('alert-banner');
+        const colLeft = document.getElementById('col-left');
+        const colRight = document.getElementById('col-right');
+
+        function connectWebSocket() {
+            badge.innerHTML = "Connecting WS...";
+            badge.className = "ws-status-badge ws-disconnected";
+
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = () => {
+                badge.innerHTML = "ONLINE / LISTENING";
+                badge.className = "ws-status-badge";
+                console.log("[✔] WebSocket connection established.");
+            };
+
+            socket.onmessage = (event) => {
+                console.log("[Data Packet Ingested]:", event.data);
+                try {
+                    const payload = JSON.parse(event.data);
+                    
+                    // Digest the live unified alert
+                    // The websocket backend might send standard alerts or mock broadcasts
+                    if (payload.accident_id) {
+                        digestUnifiedAlert(payload);
+                    } else if (payload.resolved_dispatch_data) {
+                        // Map simplified WebSocket presentation packet
+                        digestSimplifiedAlert(payload.resolved_dispatch_data);
+                    }
+                } catch (e) {
+                    console.error("Error parsing WebSocket packet:", e);
+                }
+            };
+
+            socket.onclose = () => {
+                badge.innerHTML = "Offline / Reconnecting";
+                badge.className = "ws-status-badge ws-disconnected";
+                setTimeout(connectWebSocket, 3000); // Autoreconnect loop
+            };
+
+            socket.onerror = (err) => {
+                console.error("WebSocket error:", err);
+                socket.close();
+            };
+        }
+
+        // Digest Unified JSON Alert and refresh UI
+        function digestUnifiedAlert(data) {
+            // Hide Standby Screen and Show Data columns
+            standbyScreen.style.display = "none";
+            alertBanner.style.display = "flex";
+            colLeft.style.display = "flex";
+            colRight.style.display = "flex";
+
+            // Update Telemetry Metrics
+            document.getElementById('val-accid').innerHTML = data.accident_id.substring(0, 15);
+            document.getElementById('val-g-force').innerHTML = `${data.telemetry.isolated_g_force.toFixed(2)} G`;
+            document.getElementById('val-decel').innerHTML = `${data.telemetry.deceleration_delta_kmph.toFixed(1)} km/h`;
+            document.getElementById('val-speed').innerHTML = `${data.telemetry.speed_kmph.toFixed(1)} km/h`;
+
+            // Update Biological Gauges
+            const ds = data.driver_status;
+            document.getElementById('val-ear').innerHTML = ds.ear_avg.toFixed(3);
+            document.getElementById('val-mar').innerHTML = ds.mar.toFixed(3);
+            document.getElementById('val-unresp').innerHTML = `${(ds.unresponsive_probability * 100).toFixed(1)}%`;
+            document.getElementById('val-intox').innerHTML = `${(ds.suspected_intoxication_index * 100).toFixed(1)}%`;
+
+            // Width transitions
+            document.getElementById('bar-ear').style.width = `${Math.min(100, ds.ear_avg * 150)}%`;
+            document.getElementById('bar-mar').style.width = `${Math.min(100, ds.mar * 200)}%`;
+            document.getElementById('bar-unresp').style.width = `${ds.unresponsive_probability * 100}%`;
+            document.getElementById('bar-intox').style.width = `${ds.suspected_intoxication_index * 100}%`;
+
+            // Color adjustments
+            adjustBarColors(ds.ear_avg, ds.mar);
+
+            // Update Dispatch Decision
+            const dispatch = data.dispatch_decision;
+            document.getElementById('val-hospital').innerHTML = `${dispatch.hospital_name} (Lvl ${dispatch.trauma_level})`;
+            document.getElementById('val-eta').innerHTML = `${dispatch.paramedic_eta_minutes.toFixed(1)} Mins`;
+            document.getElementById('val-score').innerHTML = `${dispatch.dispatch_score.toFixed(1)} / 100`;
+
+            // Update Green Corridor intersections
+            const listContainer = document.getElementById('val-corridor-list');
+            listContainer.innerHTML = "";
+            
+            data.green_corridor.forEach((gc, idx) => {
+                const item = document.createElement('div');
+                item.className = "checkpoint-item";
+                item.innerHTML = `
+                    <div class="checkpoint-info">
+                        <h4>Checkpoint #${idx+1}: ${gc.name}</h4>
+                        <p>Location: ${gc.latitude.toFixed(4)}, ${gc.longitude.toFixed(4)} | Arrival ETA: ${gc.estimated_arrival_seconds.toFixed(0)}s</p>
+                    </div>
+                    <div class="preempt-badge">FORCE GREEN</div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        // Digest simplified alert (from dynamic websocket intercepts)
+        function digestSimplifiedAlert(data) {
+            standbyScreen.style.display = "none";
+            alertBanner.style.display = "flex";
+            colLeft.style.display = "flex";
+            colRight.style.display = "flex";
+
+            document.getElementById('val-accid').innerHTML = data.accident_id;
+            document.getElementById('val-g-force').innerHTML = data.status.includes("CRITICAL") ? "6.83 G" : "4.25 G";
+            document.getElementById('val-decel').innerHTML = data.status.includes("CRITICAL") ? "-80.0 km/h" : "-35.0 km/h";
+            document.getElementById('val-speed').innerHTML = data.status.includes("CRITICAL") ? "0.0 km/h" : "15.0 km/h";
+
+            // Map bio
+            document.getElementById('val-ear').innerHTML = data.ear.toFixed(2);
+            document.getElementById('val-mar').innerHTML = data.mar.toFixed(2);
+            document.getElementById('val-unresp').innerHTML = data.status.includes("CRITICAL") ? "100.0%" : "0.0%";
+            document.getElementById('val-intox').innerHTML = data.prob;
+
+            document.getElementById('bar-ear').style.width = `${data.ear * 150}%`;
+            document.getElementById('bar-mar').style.width = `${data.mar * 200}%`;
+            document.getElementById('bar-unresp').style.width = data.status.includes("CRITICAL") ? "100%" : "0%";
+            document.getElementById('bar-intox').style.width = data.status.includes("CRITICAL") ? "7%" : "65%";
+
+            document.getElementById('val-hospital').innerHTML = data.hospital;
+            document.getElementById('val-eta').innerHTML = data.eta;
+            document.getElementById('val-score').innerHTML = data.status.includes("CRITICAL") ? "93.1 / 100" : "96.8 / 100";
+
+            // Static preemption signals
+            const listContainer = document.getElementById('val-corridor-list');
+            listContainer.innerHTML = `
+                <div class="checkpoint-item">
+                    <div class="checkpoint-info">
+                        <h4>Checkpoint #1: Junction Alpha (Ring Road)</h4>
+                        <p>Location: 37.7762, -122.4171 | Arrival ETA: 22s</p>
+                    </div>
+                    <div class="preempt-badge">FORCE GREEN</div>
+                </div>
+                <div class="checkpoint-item">
+                    <div class="checkpoint-info">
+                        <h4>Checkpoint #2: Junction Beta (Broadway St)</h4>
+                        <p>Location: 37.7775, -122.4148 | Arrival ETA: 45s</p>
+                    </div>
+                    <div class="preempt-badge">FORCE GREEN</div>
+                </div>
+                <div class="checkpoint-item">
+                    <div class="checkpoint-info">
+                        <h4>Checkpoint #3: Junction Gamma (Trauma Way)</h4>
+                        <p>Location: 37.7788, -122.4124 | Arrival ETA: 67s</p>
+                    </div>
+                    <div class="preempt-badge" style="border-color: var(--warning); color: var(--warning);">HOLD CORRIDOR</div>
+                </div>
+            `;
+        }
+
+        function adjustBarColors(ear, mar) {
+            const barEar = document.getElementById('bar-ear');
+            const barMar = document.getElementById('bar-mar');
+            
+            // EAR: normal green, drowsy yellow, unconscious red
+            if (ear < 0.22) {
+                barEar.className = "bio-bar-inner bg-red";
+            } else if (ear < 0.27) {
+                barEar.className = "bio-bar-inner bg-yellow";
+            } else {
+                barEar.className = "bio-bar-inner bg-green";
+            }
+
+            // MAR: normal green, sagging yellow/red
+            if (mar > 0.45) {
+                barMar.className = "bio-bar-inner bg-red";
+            } else if (mar > 0.30) {
+                barMar.className = "bio-bar-inner bg-yellow";
+            } else {
+                barMar.className = "bio-bar-inner bg-green";
+            }
+        }
+
+        // REST API Ingestion Simulation POST Trigger
+        function injectMockCrash(type) {
+            let mockPayload = {};
+            if (type === 'unconscious') {
+                mockPayload = {
+                    timestamp: Math.floor(Date.now() / 1000),
+                    latitude: 37.7749,
+                    longitude: -122.4194,
+                    speed_kmph: 0.0,
+                    accel_x: 1.2,
+                    accel_y: 5.8,
+                    accel_z: 3.4,
+                    isolated_g_force: 6.83,
+                    deceleration_delta_kmph: -80.0,
+                    predicted_accident: 1,
+                    driver_triage: {
+                        ear_avg: 0.11,
+                        mar: 0.55,
+                        facial_asymmetry_index: 0.05,
+                        unresponsive_probability: 1.0,
+                        suspected_intoxication_index: 0.07,
+                        driver_status_code: "UNCONSCIOUS"
+                    }
+                };
+            } else {
+                mockPayload = {
+                    timestamp: Math.floor(Date.now() / 1000),
+                    latitude: 37.7749,
+                    longitude: -122.4194,
+                    speed_kmph: 15.0,
+                    accel_x: 0.5,
+                    accel_y: 2.8,
+                    accel_z: 1.4,
+                    isolated_g_force: 4.25,
+                    deceleration_delta_kmph: -35.0,
+                    predicted_accident: 1,
+                    driver_triage: {
+                        ear_avg: 0.25,
+                        mar: 0.38,
+                        facial_asymmetry_index: 0.01,
+                        unresponsive_probability: 0.0,
+                        suspected_intoxication_index: 0.65,
+                        driver_status_code: "SUSPECTED_INTOXICATION"
+                    }
+                };
+            }
+
+            console.log(`[REST Ingest Trigger] Injecting mock telemetry:`, mockPayload);
+            const port = window.location.port || '8000';
+            const hostClean = window.location.hostname || '127.0.0.1';
+            fetch(`http://${hostClean}:${port}/api/telematics/crash`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(mockPayload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("[REST Ingestion Response]:", data);
+                if (data.unified_alert) {
+                    digestUnifiedAlert(data.unified_alert);
+                }
+            })
+            .catch(err => {
+                console.error("Error triggering REST mock crash injection:", err);
+            });
+        }
+
+        // Initialize connection
+        connectWebSocket();
+    </script>
+</body>
+</html>

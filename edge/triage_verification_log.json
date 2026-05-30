@@ -1,0 +1,20 @@
+{
+  "status": "PASSED",
+  "summary": {
+    "alert": {
+      "unresponsive_probability": 0.1,
+      "suspected_intoxication_index": 0.0,
+      "driver_status_code": "RESPONSIVE"
+    },
+    "unconscious": {
+      "unresponsive_probability": 1.0,
+      "suspected_intoxication_index": 0.0782,
+      "driver_status_code": "UNCONSCIOUS"
+    },
+    "intoxicated": {
+      "unresponsive_probability": 0.0,
+      "suspected_intoxication_index": 0.6025,
+      "driver_status_code": "SUSPECTED_INTOXICATION"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "metrics": {
+    "max_cruising_g": 0.0287,
+    "max_braking_g": 0.4159,
+    "min_braking_decel": -15.0,
+    "max_swerve_g": 4.1434,
+    "accident_timestamp": 9.0,
+    "accident_g_force": 6.8322,
+    "accident_deceleration": -80.0
+  },
+  "status": "PASSED"
+}

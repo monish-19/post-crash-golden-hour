@@ -1,0 +1,17 @@
+# Core Platform Dependencies
+fastapi
+uvicorn
+pydantic
+rich
+websockets
+websocket-client
+requests
+httpx
+streamlit
+
+# Edge & AI Analytics Dependencies
+opencv-python
+mediapipe
+pandas
+numpy
+scikit-learn
